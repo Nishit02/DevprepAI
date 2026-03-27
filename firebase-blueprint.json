@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and preparation statistics",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "college": { "type": "string" },
+        "branch": { "type": "string" },
+        "year": { "type": "string" },
+        "cgpa": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "targets": { "type": "array", "items": { "type": "string" } },
+        "readinessScore": { "type": "number" },
+        "streak": { "type": "number" },
+        "xp": { "type": "number" },
+        "timeSpent": { "type": "number" },
+        "topicDistribution": { "type": "object" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Submission": {
+      "title": "Submission",
+      "description": "User code submission for a problem",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "problemId": { "type": "string" },
+        "code": { "type": "string" },
+        "language": { "type": "string" },
+        "status": { "type": "string", "enum": ["Passed", "Failed", "Pending"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "qualityScore": { "type": "number" }
+      },
+      "required": ["userId", "problemId", "code", "status"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "AI Tutor chat history",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "content"]
+    },
+    "Interview": {
+      "title": "Interview",
+      "description": "Mock interview results",
+      "type": "object",
+      "properties": {
+        "score": { "type": "number" },
+        "strengths": { "type": "array", "items": { "type": "string" } },
+        "weaknesses": { "type": "array", "items": { "type": "string" } },
+        "overall": { "type": "string" },
+        "modelAnswers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "idealAnswer": { "type": "string" }
+            }
+          }
+        },
+        "type": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["score", "overall"]
+    },
+    "PublicUser": {
+      "title": "PublicUser",
+      "description": "Public user profile for leaderboard",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "problemsSolved": { "type": "number" },
+        "readinessScore": { "type": "number" },
+        "streak": { "type": "number" },
+        "xp": { "type": "number" }
+      },
+      "required": ["uid", "displayName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/users_public/{userId}": {
+      "schema": "PublicUser",
+      "description": "Public user profiles for leaderboard"
+    },
+    "/users/{userId}/chat/{chatId}": {
+      "schema": "ChatSession",
+      "description": "AI Tutor chat messages"
+    },
+    "/users/{userId}/interviews/{interviewId}": {
+      "schema": "Interview",
+      "description": "Mock interview evaluations"
+    },
+    "/submissions/{submissionId}": {
+      "schema": "Submission",
+      "description": "Coding problem submissions"
+    }
+  }
+}

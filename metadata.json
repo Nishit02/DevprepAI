@@ -1,0 +1,5 @@
+{
+  "name": "DEVPREP AI",
+  "description": "Comprehensive AI-powered placement preparation platform with code analysis, practice problems, and smart recommendations.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
+}

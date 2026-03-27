@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: uid, name, email, college, branch, year, cgpa, skills, targets, readinessScore, streak, lastActive
+    //
+    // Collection: submissions
+    // Fields: userId, problemId, code, language, status, timestamp, qualityScore
+    //
+    // Collection: chats
+    // Fields: userId, messages
+    //
+    // Collection: users_public
+    // Fields: uid, displayName, photoURL, problemsSolved, readinessScore, streak, xp
+    // Document ID: userId
+    //
+    // Collection: roadmaps
+    // Fields: title, targetRole, steps, estimatedCompletion
+    // Document ID: userId
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() < 100;
+    }
+
+    function isValidPublicUser(data) {
+      return data.uid == request.auth.uid &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 1000)) &&
+             (!('xp' in data) || (data.xp is number)) &&
+             (!('problemsSolved' in data) || (data.problemsSolved is number)) &&
+             (!('readinessScore' in data) || (data.readinessScore is number)) &&
+             (!('streak' in data) || (data.streak is number)) &&
+             (!('lastUpdated' in data) || (data.lastUpdated is string));
+    }
+
+    function isValidSubmission(data) {
+      return data.keys().hasAll(['userId', 'problemId', 'code', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.code is string && data.code.size() < 50000;
+    }
+
+    function isValidChat(data) {
+      return data.keys().hasAll(['userId', 'messages']) &&
+             data.userId == request.auth.uid &&
+             data.messages is list;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+
+      match /chat/{chatId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      match /interviews/{interviewId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+      }
+    }
+
+    match /users_public/{userId} {
+      // Allow any authenticated user to read public profiles
+      allow read: if request.auth != null;
+      // Only the owner can create/update their public profile
+      allow create: if request.auth != null && request.auth.uid == userId && isValidPublicUser(request.resource.data);
+      allow update: if request.auth != null && request.auth.uid == userId && isValidPublicUser(request.resource.data);
+    }
+
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    match /roadmaps/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    match /submissions/{submissionId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidSubmission(request.resource.data);
+      allow update: if isDocOwner() && isValidSubmission(request.resource.data);
+    }
+  }
+}
